@@ -95,6 +95,8 @@ static ss_plugin_rc __extract_fields(plugin_api* p, ss_plugin_t *s, const ss_plu
     return p->extract_fields(s, e, n, f);
 }
 
+// TODO: new API to add
+
 */
 import "C"
 import (

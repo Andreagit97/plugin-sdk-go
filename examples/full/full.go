@@ -35,6 +35,7 @@ import (
 	"github.com/falcosecurity/plugin-sdk-go/pkg/sdk/plugins"
 	"github.com/falcosecurity/plugin-sdk-go/pkg/sdk/plugins/extractor"
 	"github.com/falcosecurity/plugin-sdk-go/pkg/sdk/plugins/source"
+	"github.com/falcosecurity/plugin-sdk-go/pkg/sdk/symbols/logging"
 )
 
 // Defining a type for the plugin configuration.
@@ -127,6 +128,7 @@ func (m *MyPlugin) InitSchema() *sdk.SchemaInfo {
 // always well-formed according to the provided schema.
 // This method is mandatory.
 func (m *MyPlugin) Init(config string) error {
+	logging.Log(logging.CRITICAL, "-----------------> Hello from plugin <----------------")
 	// Deserialize the config json. Ignoring the error
 	// and not validating the config values is possible
 	// due to the schema defined through InitSchema(),
