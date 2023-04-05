@@ -39,6 +39,17 @@ const (
 	SSPluginNotSupported int32 = 3
 )
 
+const (
+	SSPluginSevFatal uint32 = iota + 1
+	SSPluginSevCritical
+	SSPluginSevError
+	SSPluginSevWarning
+	SSPluginSevNotice
+	SSPluginSevInfo
+	SSPluginSevDebug
+	SSPluginSevTrace
+)
+
 // DefaultEvtSize is the default size for the data payload allocated
 // for each event in the EventWriters interface used by the SDK.
 const DefaultEvtSize uint32 = 256 * 1024

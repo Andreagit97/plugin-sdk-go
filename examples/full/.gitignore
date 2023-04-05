@@ -1,2 +1,4 @@
 *.so
 *.h
+# this should be the ruleset used to test the plugin
+ruleset.yaml

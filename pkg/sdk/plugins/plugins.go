@@ -45,6 +45,7 @@ type Plugin interface {
 	// (optional): sdk.InitSchema
 	sdk.LastError
 	sdk.LastErrorBuffer
+	sdk.LoggerConsumer
 	//
 	// Info returns a pointer to a Info struct, containing
 	// all the general information about this plugin.
@@ -127,6 +128,18 @@ func (b *BaseOpenParams) OpenParamsBuffer() sdk.StringBuffer {
 	return &b.openParamsBuf
 }
 
+type BaseLoggerConsumer struct {
+	logger sdk.Logger
+}
+
+func (b *BaseLoggerConsumer) Logger() sdk.Logger {
+	return b.logger
+}
+
+func (b *BaseLoggerConsumer) SetLogger(l sdk.Logger) {
+	b.logger = l
+}
+
 // BasePlugin is a base implementation of the Plugin interface.
 // Developer-defined Plugin implementations should be composed with BasePlugin
 // to have out-of-the-box compliance with all the required interfaces.
@@ -135,6 +148,7 @@ type BasePlugin struct {
 	BaseStringer
 	BaseExtractRequests
 	BaseOpenParams
+	BaseLoggerConsumer
 }
 
 // FactoryFunc creates a new Plugin
@@ -166,7 +180,6 @@ type FactoryFunc func() Plugin
 //			return p
 //		})
 //	}
-//
 func SetFactory(f FactoryFunc) {
 
 	// Create a new plugin instance to get static plugin info

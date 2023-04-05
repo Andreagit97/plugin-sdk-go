@@ -196,6 +196,8 @@ func (m *MyPlugin) Open(params string) (source.Instance, error) {
 		return nil, err
 	}
 
+	_ = m.Logger().Warn("PLUGIN: Opened")
+
 	myInstance := &MyInstance{
 		counter: m.config.Start,
 	}

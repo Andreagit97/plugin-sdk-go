@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 // This package exports the following C functions:
-// - ss_plugin_t* plugin_init(char* config, int32_t* rc)
+// - ss_plugin_t* plugin_init(const char* config, int32_t* rc, const ss_plugin_init_input* input)
 // - void* plugin_destroy(ss_plugin_t* s)
 //
 // The exported plugin_init calls the function set with SetOnInit, which
@@ -39,14 +39,57 @@ package initialize
 
 /*
 #include <stdint.h>
+#include "../../plugin_types.h"
+static void log_helper(ss_plugin_log_func f, void* owner, ss_plugin_log_severity sev, const char* msg) { f(owner, sev, msg); }
 */
 import "C"
 import (
+	"unsafe"
+
 	"github.com/falcosecurity/plugin-sdk-go/pkg/cgo"
 	"github.com/falcosecurity/plugin-sdk-go/pkg/ptr"
 	"github.com/falcosecurity/plugin-sdk-go/pkg/sdk"
 	"github.com/falcosecurity/plugin-sdk-go/pkg/sdk/internal/hooks"
 )
+
+type PluginLogger struct {
+	loggingCallBack C.ss_plugin_log_func
+	owner           unsafe.Pointer
+	enabledSeverity uint32
+	buf             ptr.StringBuffer
+}
+
+// Not sure if we need to return an error
+func (p *PluginLogger) Warn(msg string) error {
+	/* We want to remove all useless call */
+	if p.enabledSeverity < sdk.SSPluginSevWarning {
+		return nil
+	}
+	p.buf.Write(msg)
+	C.log_helper(p.loggingCallBack, p.owner, (C.ss_plugin_log_severity)(sdk.SSPluginSevWarning), (*C.char)(p.buf.CharPtr()))
+	return nil
+}
+
+func (p *PluginLogger) Info(msg string) error {
+	if p.enabledSeverity < sdk.SSPluginSevInfo {
+		return nil
+	}
+	p.buf.Write(msg)
+	C.log_helper(p.loggingCallBack, p.owner, (C.ss_plugin_log_severity)(sdk.SSPluginSevInfo), (*C.char)(p.buf.CharPtr()))
+	return nil
+}
+
+func (p *PluginLogger) SetCallback(cb C.ss_plugin_log_func) {
+	p.loggingCallBack = cb
+}
+
+func (p *PluginLogger) SetOwner(owner unsafe.Pointer) {
+	p.owner = owner
+}
+
+func (p *PluginLogger) SetEnabledSev(sev uint32) {
+	p.enabledSeverity = sev
+}
 
 type baseInit struct {
 	lastErr    error
@@ -82,7 +125,7 @@ func SetOnInit(fn OnInitFn) {
 }
 
 //export plugin_init
-func plugin_init(config *C.char, rc *int32) C.uintptr_t {
+func plugin_init(config *C.char, rc *int32, init *C.ss_plugin_init_input) C.uintptr_t {
 	var state sdk.PluginState
 	var err error
 
@@ -97,6 +140,16 @@ func plugin_init(config *C.char, rc *int32) C.uintptr_t {
 		if ok && extrReqs.ExtractRequests() == nil {
 			extrReqs.SetExtractRequests(sdk.NewExtractRequestPool())
 		}
+
+		// If the plugin is a Logger consumer set we set a Logger
+		if logCons, ok := state.(sdk.LoggerConsumer); ok {
+			logger := &PluginLogger{}
+			logger.SetCallback(init.log)
+			logger.SetOwner(init.owner)
+			logger.SetEnabledSev(uint32(init.min_sev))
+			logCons.SetLogger(logger)
+		}
+
 		*rc = sdk.SSPluginSuccess
 	}
 

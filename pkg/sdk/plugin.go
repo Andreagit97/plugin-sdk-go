@@ -25,6 +25,11 @@ type ExtractRequests interface {
 	SetExtractRequests(ExtractRequestPool)
 }
 
+type LoggerConsumer interface {
+	Logger() Logger
+	SetLogger(Logger)
+}
+
 // LastError is a compasable interface wrapping the basic LastError and
 // SetLastError methods. This is meant to be used as a standard
 // container for the last error catched during the execution of a plugin.
